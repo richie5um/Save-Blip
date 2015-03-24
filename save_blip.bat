@@ -165,9 +165,10 @@ exit /b
 :comment
 setlocal
 :commentloop
+set "line="
 "%wkhtml%" %previous_url% --no-stop-slow-scripts --run-script "console.log(document.readyState);" --run-script "document.onload = load_comments.click();" --run-script "load_comments.click();" --run-script "load_comments.scrollIntoView(true);" --run-script "load_comments.click();" --javascript-delay 2000 --debug-javascript %blip_entries_dir%\%entry_date%.pdf 2>> %result_log_file% 
 
-for /f "delims=" %%i in ( 'findstr "interactive" %result_log_file%' ) do set "line=%%i"
+for /f "delims=" %%i in ( 'findstr "interactive complete" %result_log_file%' ) do set "line=%%i"
 del %result_log_file%
 set "result=%line: =%"
 set "result=%result::=%"
