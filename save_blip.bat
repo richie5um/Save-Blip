@@ -232,7 +232,7 @@ exit /b
 
 :checkWgetXP
 setlocal
-for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\GnuWin32\Wget\1.11.4-1\setup /v InstallPath' ) do set "wget=%%i"
+for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\GnuWin32\Wget\1.11.4-1\setup /v InstallPath' ) do set "result=%%i"
 set "result=%result:~23%\bin\wget"
 endlocal & set "wget=%result%"
 exit /b
