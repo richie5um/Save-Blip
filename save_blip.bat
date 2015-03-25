@@ -80,29 +80,45 @@ REM  Note - producing the PDF may take several second though.
 set delay=2
 set blip_entries_dir=.\blip_entries
 
+if exist %blip_entries_dir% goto :blipDirExists
 
-if not exist %blip_entries_dir% (
-	echo Making directory %blip_entries_dir%
-	mkdir %blip_entries_dir%
-	if %errorlevel% neq 0 (
-		echo Failed to make directory %blip_entries_dir%
-		exit /b
-	)
+echo Making directory %blip_entries_dir%
+mkdir %blip_entries_dir%
+if %errorlevel% neq 0 (
+	echo Failed to make directory %blip_entries_dir%
+	exit /b
 )
+
+:blipDirExists
 
 REM Check that wkhtml and wget are installed
 
-for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\wkhtmltopdf /v PdfPath' ) do set "wkhtml=%%i"
-set "wkhtml=%wkhtml:~19%"
+echo Checking wkhtmltopdf and wget are installed...
+
+REM Check if we are running something later than XP
+REM systeminfo is only available on Vista and above
+REM so a non-existent command will result in a non-zero
+REM errorlevel
+
+systeminfo > nul 2>&1
+if %errorlevel% equ 0 goto :notXP
+
+call :checkWkhtmlXP
+call :checkWgetXP
+goto :installChecks
+
+:notXP
+
+call :getWindowsDrive
+call :checkWkhtmlNotXP %windrive%
+call :checkWgetNotXP %windrive%
+
+:installChecks
 
 if "-%wkhtml%-" == -- (
 	echo Please download and install "%wkhtml%" >> %output_log_file%
 	exit /b
 )
-
-
-for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\GnuWin32\Wget\1.11.4-1\setup /v InstallPath' ) do set "wget=%%i"
-set "wget=%wget:~23%\bin\wget"
 
 if "-%wget%-" == -- (
 	echo Please download and install wget >> %output_log_file%
@@ -184,11 +200,45 @@ endlocal
 REM Return from call
 exit /b
 
-
 :sleep
 setlocal
 REM fake 1 sec delay
 ping -n 1 127.0.0.1 >nul 
 endlocal
 REM Return from call
+exit /b
+
+:getWindowsDrive
+setlocal
+systeminfo 2>&1 | find "Windows Directory" > %tmp_file%
+for /f "tokens=3 delims= " %%i in ( 'type %tmp_file% ') do set tmp=%%i
+for /f "tokens=1 delims=:" %%i in ( 'echo %tmp%' ) do set result=%%i
+del %tmp_file%
+endlocal & set "windrive=%result%"
+exit /b
+
+:checkWkhtmlXP
+setlocal
+for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\wkhtmltopdf /v PdfPath' ) do set "result=%%i"
+set "result=%result:~19%"
+endlocal & set "wkhtml=%result%"
+exit /b
+
+:checkWkhtmlNotXP
+setlocal
+for /f "delims=" %%i in ( 'where /R %1%:\ wkhtmltopdf.exe' ) do set "result=%%i"
+endlocal & set "wkhtml=%result%"
+exit /b
+
+:checkWgetXP
+setlocal
+for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\GnuWin32\Wget\1.11.4-1\setup /v InstallPath' ) do set "result=%%i"
+set "result=%result:~23%\bin\wget"
+endlocal & set "wget=%result%"
+exit /b
+
+:checkWgetNotXP
+setlocal
+for /f "delims=" %%i in ( 'where /R %1%:\ wget.exe' ) do set "result=%%i"
+endlocal & set "wget=%result%"
 exit /b
