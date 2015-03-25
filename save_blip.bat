@@ -92,17 +92,34 @@ if not exist %blip_entries_dir% (
 
 REM Check that wkhtml and wget are installed
 
-for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\wkhtmltopdf /v PdfPath' ) do set "wkhtml=%%i"
+echo Checking wkhtmltopdf and wget are installed...
+
+REM Check if we are running something later than XP
+REM systeminfo is only available on Vista and above
+REM so a non-existent command will result in a non-zero
+REM errorlevel
+
+systeminfo 2>1 > nul 
+if %errorlevel% neq 0 goto notXP
+
+for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\wkhtmltopdf /v PdfPath' ) do set "wkhtml=%%i".
 set "wkhtml=%wkhtml:~19%"
+
+for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\GnuWin32\Wget\1.11.4-1\setup /v InstallPath' ) do set "wget=%%i"
+set "wget=%wget:~23%\bin\wget"
+
+:notXP
+
+systeminfo 2>1 | find "Windows Directory" > %tmp_file%
+for /f "tokens=3 delims= " %%i in ( 'type %tmp_file% ') do set tmp=%%i
+for /f "tokens=1 delims=:" %%i in ( 'echo %tmp%' ) do set windrive=%%i
+for /f "delims=" %%i in ( 'where /R %windrive%:\ wkhtmltopdf.exe' ) do set "wkhtml=%%i"
+for /f "delims=" %%i in ( 'where /R %windrive%:\ wget.exe' ) do set "wget=%%i"
 
 if "-%wkhtml%-" == -- (
 	echo Please download and install "%wkhtml%" >> %output_log_file%
 	exit /b
 )
-
-
-for /f "delims= skip=2" %%i in ( 'reg query HKEY_LOCAL_MACHINE\SOFTWARE\GnuWin32\Wget\1.11.4-1\setup /v InstallPath' ) do set "wget=%%i"
-set "wget=%wget:~23%\bin\wget"
 
 if "-%wget%-" == -- (
 	echo Please download and install wget >> %output_log_file%
