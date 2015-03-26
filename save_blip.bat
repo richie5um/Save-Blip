@@ -60,8 +60,8 @@ set final_url=%4
 set tmp_file=.\blip_wget_tmp_file.tmp
 set output_log_file=.\output_log.txt
 set result_log_file=.\wkhtml_result.txt
-echo "" > %output_log_file%
-echo "" > %result_log_file%
+echo  > %output_log_file%
+echo  > %result_log_file%
 
 if -%final_url%- == -- (
 	set final_url=%base_url%
@@ -116,7 +116,7 @@ call :checkWgetNotXP %windrive%
 :installChecks
 
 if "-%wkhtml%-" == -- (
-	echo Please download and install "%wkhtml%" >> %output_log_file%
+	echo Please download and install wkhtmltopdf >> %output_log_file%
 	exit /b
 )
 
