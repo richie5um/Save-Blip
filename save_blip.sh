@@ -85,7 +85,6 @@ comments=$2
 previous_url=$3
 final_url=$4
 tmp_file=/tmp/blip$$
-additional_javascript=""
 
 if [[ -z ${final_url} ]]; then
 	final_url=${base_url}
@@ -110,6 +109,25 @@ if [[ ! -d ${blip_entries_dir} ]]; then
 	fi
 fi
 
+# Check that wkhtml and wget are installed
+
+echo "Checking wkhtmltopdf and wget are installed..."
+if [[ -z $( which wkhtmltopdf ) ]]; then
+	echo "The wkhtmltopdf program was not found in any of the directories"
+	echo "on your PATH variable ($PATH)."
+	echo "Please download and install wkhtmltopdf, or update your PATH"
+	echo "variable before re-running this command."
+	exit 1
+fi
+
+if [[ -z $( which wget ) ]]; then
+	echo "The wget program was not found in any of the directories"
+	echo "on your PATH variable ($PATH)."
+	echo "Please download and install wget, or update your PATH"
+	echo "variable before re-running this command."
+	exit 1
+fi
+
 # Start by printing a front cover
 
 echo "Printing front cover for user ${user}...."
@@ -119,7 +137,7 @@ wkhtmltopdf -q ${base_url}/${user} \
 
 while [[ $previous_url != $final_url ]];
 do
-	wget -q -O ${tmp_file} $previous_url
+	wget --no-check-certificate -q -O ${tmp_file} $previous_url
 	entry_date=$( grep 'JournalGallery","title":"' ${tmp_file} \
 		| sed 's/^.*JournalGallery","title":"//' \
 		| sed 's/".*$//' | sed 's/ /_/g' )
@@ -145,7 +163,7 @@ do
 				--javascript-delay 2000  \
 				--debug-javascript  \
 				${blip_entries_dir}/${entry_date}.pdf 2>&1 \
-				| grep "complete" )
+				| egrep "interactive|complete" )
 			if [[ -z $result ]]; then
 				echo "Retrying...."
 				sleep 1
