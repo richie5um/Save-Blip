@@ -116,7 +116,7 @@ if [[ ${headersandfooters} != "y" && ${headersandfooters} != "n" ]]; then
 fi
 
 if [[ ${headersandfooters} == "n" ]]; then
-	headerfooterjs='var c = document.getElementsByClassName("topbar").item(0) ; var p = c.parentNode; p.removeChild(c); c = document.getElementsByClassName("footer").item(0) ; var p = c.parentNode; p.removeChild(c);'
+	headerfooterjs='var c = document.getElementsByClassName("topbar").item(0) ; var p = c.parentNode; p.removeChild(c); c = document.getElementById("status"); p = c.parentNode; p.removeChild(c); c = document.getElementsByClassName("footer").item(0); p = c.parentNode; p.removeChild(c);'
 fi
 
 # Use a 2 second delay between getting entries.

@@ -77,7 +77,7 @@ if not -%headersandfooters%- == -y- (
 )
 
 if -%headersandfooters%- == -n- (
-        set headerfooterjs="var c = document.getElementsByClassName('topbar').item(0) ; var p = c.parentNode; p.removeChild(c); c = document.getElementsByClassName('footer').item(0) ; var p = c.parentNode; p.removeChild(c);"
+        set headerfooterjs="var c = document.getElementsByClassName('topbar').item(0) ; var p = c.parentNode; p.removeChild(c); c = document.getElementById("status"); p = c.parentNode; p.removeChild(c); c = document.getElementsByClassName('footer').item(0) ; p = c.parentNode; p.removeChild(c);"
 )
 
 
