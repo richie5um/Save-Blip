@@ -60,39 +60,63 @@
 #
 ##############################################
 
-if [[ $# -lt 3 ]]; then
+function showusage() {
 	echo "There are two forms of usage."
-	echo "	The first prints all entries in reverse chronological order"
-	echo "	given an initial entry"
-	echo ""
-	echo "	Usage: blip_username with_comments url_of_first_blip_to_print"
+	echo "	The first prints all entries in reverse chronological order given an initial entry"
+	echo 
+	echo "	Usage:"
+	echo "	$0 blip_username with_comments with_headers_and_footers url_of_first_blip_to_print"
+	echo 
 	echo "	Example:"
-	echo "	$0 yourusername y https://www.polaroidblipfoto.com/entry/1234567890 "
-	echo ""
-	echo "	The second prints entries from an initial entry up to, but not"
-	echo "	including, a final entry in reverse chronological order."
+	echo "	$0 yourusername y n https://www.polaroidblipfoto.com/entry/1234567890 "
+	echo 
+	echo "	The second prints entries from an initial entry up to, but not including, a final entry in reverse chronological order."
 	echo "	No check is made that the last entry is before the first."
-	echo ""
-	echo "	Usage: blip_username with_comments url_of_first_blip_to_print url_of_final_blip_to_stop_at"
+	echo 
+	echo "	Usage:"
+	echo "	$0 blip_username with_comments with_headers_and_footers url_of_first_blip_to_print url_of_final_blip_to_stop_at"
+	echo 
 	echo "	Example:"
-	echo "	$0 yourusername n https://www.polaroidblipfoto.com/entry/4321 https://www.polaroidblipfoto.com/entry/1234"
+	echo "	$0 yourusername n y https://www.polaroidblipfoto.com/entry/4321 https://www.polaroidblipfoto.com/entry/1234"
+}
+
+if [[ $# -lt 4 ]]; then
+	showusage
 	exit 1
 fi
 
 base_url="https://www.polaroidblipfoto.com"
 user=$1
 comments=$2
-previous_url=$3
-final_url=$4
+headersandfooters=$3
+previous_url=$4
+final_url=$5
+docomments="var x = 0;"
+headerfooterjs="var x = 0;"
 tmp_file=/tmp/blip$$
 
 if [[ -z ${final_url} ]]; then
 	final_url=${base_url}
 fi
 
-if [[ $comments != "y" && ${comments} != "n" ]]; then
+if [[ ${comments} != "y" && ${comments} != "n" ]]; then
 	echo "Comments option must be y or n"
+	showusage
 	exit 1
+fi
+
+if [[ ${comments} == "y" ]]; then
+	docomments='load_comments.scrollIntoView(true); load_comments.click();' 
+fi
+
+if [[ ${headersandfooters} != "y" && ${headersandfooters} != "n" ]]; then
+	echo "Headers and footers option must be y or n"
+	showusage
+	exit 1
+fi
+
+if [[ ${headersandfooters} == "n" ]]; then
+	headerfooterjs='var c = document.getElementsByClassName("topbar").item(0) ; var p = c.parentNode; p.removeChild(c); c = document.getElementById("status"); p = c.parentNode; p.removeChild(c); c = document.getElementsByClassName("footer").item(0); p = c.parentNode; p.removeChild(c);'
 fi
 
 # Use a 2 second delay between getting entries.
@@ -132,6 +156,8 @@ fi
 
 echo "Printing front cover for user ${user}...."
 wkhtmltopdf -q ${base_url}/${user} \
+	--run-script "console.log(document.readyState);" \
+	--run-script "${headerfooterjs}" \
 	./${blip_entries_dir}/front_cover.pdf  \
 	> /dev/null 2>&1
 
@@ -142,34 +168,26 @@ do
 		| sed 's/^.*JournalGallery","title":"//' \
 		| sed 's/".*$//' | sed 's/ /_/g' )
 	echo "Printing entry ${entry_date}...."
-	if [[ $comments == "n" ]]; then
-		wkhtmltopdf -q ${additional_javascript} ${previous_url} \
-			${blip_entries_dir}/${entry_date}.pdf  \
-			> /dev/null 2>&1
-	else	
-		result=""
-		while [[ -z $result ]];
-		do
-			# Note
-			# The run-script function does not always work correctly
-			# hence the loop.
-			result=$( wkhtmltopdf ${previous_url} \
-				--no-stop-slow-scripts \
-				--run-script 'console.log(document.readyState);' \
-				--run-script  'document.onload = load_comments.click();' \
-				--run-script  'load_comments.click();' \
-				--run-script  'load_comments.scrollIntoView(true);' \
-				--run-script  'load_comments.click();' \
-				--javascript-delay 2000  \
-				--debug-javascript  \
-				${blip_entries_dir}/${entry_date}.pdf 2>&1 \
-				| egrep "interactive|complete" )
-			if [[ -z $result ]]; then
-				echo "Retrying...."
-				sleep 1
-			fi
-		done
-	fi
+	result=""
+	while [[ -z $result ]];
+	do
+		# Note
+		# The run-script function does not always work correctly
+		# hence the loop.
+		result=$( wkhtmltopdf ${previous_url} \
+			--run-script "${headerfooterjs}" \
+			--run-script "console.log(document.readyState);" \
+			--run-script "${docomments}" \
+			--no-stop-slow-scripts  \
+			--javascript-delay 2000  \
+			--debug-javascript  \
+			${blip_entries_dir}/${entry_date}.pdf 2>&1 \
+			| egrep "interactive|complete" )
+		if [[ -z $result ]]; then
+			echo "Retrying...."
+			sleep 1
+		fi
+	done
 	previous_url=${base_url}$( grep 'title="Previous"' ${tmp_file} \
 		| sed 's/^.*href="//' | sed 's/".*$//' )
 	rm ${tmp_file}
