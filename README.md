@@ -2,6 +2,8 @@
 
 This is a simple shell script which will give the output of all your Blips in a directory as PDF files and a cover.
 
+You might want the [website](https://dougaitken.co.uk/Save-Blip) for more information.
+
 ### Usage
 
 Read the post by Hazel Hall about the recent movement and the raw details of this script him her [blog post](http://hazelhall.org/2015/03/17/save-blipfoto-how-to-automatically-generate-pdf-files-of-your-journal-entries/).
