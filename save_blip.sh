@@ -119,6 +119,8 @@ if [[ ${headersandfooters} == "n" ]]; then
 	headerfooterjs='var c = document.getElementsByClassName("topbar").item(0) ; var p = c.parentNode; p.removeChild(c); c = document.getElementById("status"); p = c.parentNode; p.removeChild(c); c = document.getElementsByClassName("footer").item(0); p = c.parentNode; p.removeChild(c);'
 fi
 
+removeBlipFuture='var c = document.getElementById("main-inner").getElementsByClassName("row").item(0).getElementsByClassName("small-12").item(0) ; var p = c.parentNode; p.removeChild(c);'
+
 # Use a 2 second delay between getting entries.
 # Note - producing the PDF may take several second though.
 delay=2
@@ -158,6 +160,7 @@ echo "Printing front cover for user ${user}...."
 wkhtmltopdf -q ${base_url}/${user} \
 	--run-script "console.log(document.readyState);" \
 	--run-script "${headerfooterjs}" \
+	--run-script "${removeBlipFuture}" \
 	./${blip_entries_dir}/front_cover.pdf  \
 	> /dev/null 2>&1
 
@@ -176,6 +179,7 @@ do
 		# hence the loop.
 		result=$( wkhtmltopdf ${previous_url} \
 			--run-script "${headerfooterjs}" \
+			--run-script "${removeBlipFuture}" \
 			--run-script "console.log(document.readyState);" \
 			--run-script "${docomments}" \
 			--no-stop-slow-scripts  \
